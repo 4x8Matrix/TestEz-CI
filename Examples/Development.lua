@@ -21,6 +21,11 @@ local TestEzCI = require("../Source/init")
 local Habitat = TestEzCI.Habitat.fromPlace("latest.rbxl")
 
 Habitat:addExtension(require("Extensions/Workspace"))
+Habitat:addExtension(require("Extensions/DataModel"))
+Habitat:addExtension(require("Extensions/RunService"))
 Habitat:addExtension(require("Extensions/TestService"))
+Habitat:addExtension(require("Extensions/HttpService"))
+
+Habitat:addGlobal("DateTime", require("Globals/Roblox/DateTime"))
 
 Habitat:execute("ServerScriptService.CI")
