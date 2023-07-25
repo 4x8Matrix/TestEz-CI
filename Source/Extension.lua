@@ -1,3 +1,5 @@
+local Signal = require("Dependencies/Github/Signal")
+
 local Extension = {}
 
 Extension.interface = {}
@@ -14,15 +16,17 @@ function Extension.prototype:addProperty(propertyName, propertyValue)
 end
 
 function Extension.prototype:addEvent(eventName)
-	self.events[eventName] = { }
+	self.events[eventName] = Signal.new()
 end
 
 function Extension.prototype:__index(_, index)
 	if self.methods[index] or self.events[index] then
-		return self.methods[index] or self.events[index]
+		return true, self.methods[index] or self.events[index]
 	end
 
-	return self.properties[index].value
+	if self.properties[index] then
+		return true, self.properties[index].value
+	end
 end
 
 function Extension.prototype:__newindex(_, index, value)

@@ -4,7 +4,9 @@ local Generics = {
 	["string"] = true,
 	["number"] = true,
 	["boolean"] = true,
-	["nil"] = true
+	["table"] = true,
+	["nil"] = true,
+	["thread"] = true
 }
 
 Reflector.interface = {}
@@ -39,7 +41,7 @@ end
 function Reflector.prototype:getProxyFromArgs(...)
 	local proxies = {}
 
-	for index, object in { ... } do
+	for index, object in table.pack(...) do
 		proxies[index] = self:getProxyFromObject(object)
 	end
 
@@ -49,7 +51,7 @@ end
 function Reflector.prototype:getObjectsFromArgs(...)
 	local objects = {}
 
-	for index, proxy in { ... } do
+	for index, proxy in table.pack(...) do
 		objects[index] = self:getObjectFromProxy(proxy)
 	end
 
@@ -59,20 +61,20 @@ end
 function Reflector.prototype:createProxyForObject(object)
 	local proxyObject = object
 
-	if Generics[type(object)] then
+	if Generics[typeof(object)] then
 		return object
 	end
 
 	if type(object) == "userdata" then
 		proxyObject = newproxy(true)
-
+	
 		getmetatable(proxyObject).__index = self:generateIndexForObject(object)
 		getmetatable(proxyObject).__newindex = self:generateNewIndexForObject(object)
 	elseif type(object) == "function" then
 		proxyObject = function(...)
-			local response = { object(self:getObjectsFromArgs(...)) }
+			local response = table.pack(object(self:getObjectsFromArgs(...)))
 
-			return self:getProxyFromArgs(table.unpack(response))
+			return self:getProxyFromArgs(table.unpack(response, 1, response.n))
 		end
 	end
 

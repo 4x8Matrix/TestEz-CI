@@ -1,5 +1,6 @@
 local FileSystem = require("@lune/fs")
 local Roblox = require("@lune/roblox")
+local Task = require("@lune/task")
 
 local Reflector = require("Reflector")
 
@@ -37,6 +38,14 @@ function Habitat.prototype:removeExtension(extensionObject)
 	self.extensions[extensionObject.name] = nil
 end
 
+function Habitat.prototype:addGlobal(globalName, object)
+	self.environment[globalName] = object
+end
+
+function Habitat.prototype:removeGlobal(globalName)
+	self.environment[globalName] = nil
+end
+
 function Habitat.prototype:require(module)
 	local moduleFunction = loadstring(module.Source)
 
@@ -64,6 +73,7 @@ function Habitat.interface.new(rootUserdata)
 			game = rootUserdata,
 			workspace = rootUserdata.Workspace,
 
+			task = Task,
 			tick = os.clock
 		}, { __index = getfenv() })
 	}, { __index = Habitat.prototype })
@@ -77,17 +87,21 @@ function Habitat.interface.new(rootUserdata)
 	end
 
 	self.reflector:setIndexCallback(function(object, index)
-		local extensionObject = self.extensions[object.ClassName]
-
-		if extensionObject then
-			local indexResult = extensionObject:__index(object, index)
-
-			if indexResult ~= nil then
-				return true, indexResult
-			end
+		if typeof(object) ~= "Instance" then
+			return false
 		end
 
-		return false
+		if not self.extensions[object.ClassName] then
+			return false
+		end
+
+		local isValid, indexResult = self.extensions[object.ClassName]:__index(object, index)
+
+		if not isValid then
+			return false
+		else
+			return true, indexResult
+		end
 	end)
 
 	self.reflector:setNewIndexCallback(function(object, index, value)
